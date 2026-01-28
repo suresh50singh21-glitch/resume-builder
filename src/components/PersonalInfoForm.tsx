@@ -1,8 +1,10 @@
 import React from 'react';
-import { Form, Input, Card, Upload, message, AutoComplete } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Form, Input, Card, Upload, message, AutoComplete, Button, Space } from 'antd';
+import { PlusOutlined, BgColorsOutlined } from '@ant-design/icons';
 import type { PersonalInfo } from '../types/resume';
 import { ALL_COUNTRIES, ALL_CITIES } from '../utils/locations';
+import SuggestionModal from './SuggestionModal';
+import { improveSummary } from '../utils/gemini';
 
 interface PersonalInfoFormProps {
   data: PersonalInfo;
@@ -12,6 +14,18 @@ interface PersonalInfoFormProps {
 const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChange }) => {
   const [form] = Form.useForm();
   const [locationOptions, setLocationOptions] = React.useState<any[]>([]);
+  const [summaryModal, setSummaryModal] = React.useState<{
+    visible: boolean;
+    loading: boolean;
+    original: string;
+    suggested: string;
+    error?: string;
+  }>({
+    visible: false,
+    loading: false,
+    original: '',
+    suggested: '',
+  });
 
   React.useEffect(() => {
     form.setFieldsValue(data);
@@ -69,6 +83,34 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChange }) =
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleSuggestSummary = async () => {
+    if (!data.summary.trim()) {
+      message.warning('Please enter a summary first');
+      return;
+    }
+
+    setSummaryModal({
+      visible: true,
+      loading: true,
+      original: data.summary,
+      suggested: '',
+    });
+
+    const result = await improveSummary(data.summary);
+    setSummaryModal({
+      visible: true,
+      loading: false,
+      original: result.original,
+      suggested: result.suggested,
+      error: result.error,
+    });
+  };
+
+  const handleAcceptSummary = (suggestion: string) => {
+    onChange({ ...data, summary: suggestion });
+    setSummaryModal({ visible: false, loading: false, original: '', suggested: '' });
   };
 
   return (
@@ -129,10 +171,20 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChange }) =
           label="Professional Summary"
           name="summary"
         >
-          <Input.TextArea 
-            rows={4}
-            placeholder="Brief overview of your professional background and goals"
-          />
+          <Space direction="vertical" style={{ width: '100%' }} size="small">
+            <Input.TextArea 
+              rows={4}
+              placeholder="Brief overview of your professional background and goals"
+            />
+            <Button
+              size="small"
+              icon={<BgColorsOutlined />}
+              onClick={handleSuggestSummary}
+              style={{ alignSelf: 'flex-start' }}
+            >
+              ✨ AI Improve Summary
+            </Button>
+          </Space>
         </Form.Item>
 
         <Form.Item
@@ -157,6 +209,17 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChange }) =
           )}
         </Form.Item>
       </Form>
+
+      <SuggestionModal
+        visible={summaryModal.visible}
+        title="Improve Professional Summary"
+        original={summaryModal.original}
+        suggested={summaryModal.suggested}
+        loading={summaryModal.loading}
+        error={summaryModal.error}
+        onAccept={handleAcceptSummary}
+        onCancel={() => setSummaryModal({ visible: false, loading: false, original: '', suggested: '' })}
+      />
     </Card>
   );
 };

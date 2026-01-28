@@ -1,7 +1,9 @@
-import React from 'react';
-import { Form, Input, Button, Card, Row, Col, Checkbox } from 'antd';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Form, Input, Button, Card, Row, Col, Checkbox, Space } from 'antd';
+import { DeleteOutlined, PlusOutlined, BgColorsOutlined } from '@ant-design/icons';
 import type { Experience } from '../types/resume';
+import SuggestionModal from './SuggestionModal';
+import { improveJobDescription } from '../utils/gemini';
 
 interface ExperienceFormProps {
   data: Experience[];
@@ -9,6 +11,20 @@ interface ExperienceFormProps {
 }
 
 const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }) => {
+  const [suggestionState, setSuggestionState] = useState<{
+    visible: boolean;
+    loading: boolean;
+    original: string;
+    suggested: string;
+    error?: string;
+    expId?: string;
+  }>({
+    visible: false,
+    loading: false,
+    original: '',
+    suggested: '',
+  });
+
   const addExperience = () => {
     const newExperience: Experience = {
       id: Math.random().toString(36).substr(2, 9),
@@ -31,6 +47,33 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }) => {
     onChange(data.map(exp =>
       exp.id === id ? { ...exp, [field]: value } : exp
     ));
+  };
+
+  const handleSuggestDescription = async (exp: Experience) => {
+    setSuggestionState({
+      visible: true,
+      loading: true,
+      original: exp.description,
+      suggested: '',
+      expId: exp.id,
+    });
+
+    const result = await improveJobDescription(exp.jobTitle, exp.description);
+    setSuggestionState({
+      visible: true,
+      loading: false,
+      original: result.original,
+      suggested: result.suggested,
+      error: result.error,
+      expId: exp.id,
+    });
+  };
+
+  const handleAcceptSuggestion = (suggestion: string) => {
+    if (suggestionState.expId) {
+      handleChange(suggestionState.expId, 'description', suggestion);
+    }
+    setSuggestionState({ visible: false, loading: false, original: '', suggested: '' });
   };
 
   return (
@@ -113,12 +156,22 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }) => {
             </Row>
 
             <Form.Item label="Description">
-              <Input.TextArea
-                rows={4}
-                value={exp.description}
-                onChange={(e) => handleChange(exp.id, 'description', e.target.value)}
-                placeholder="Describe your responsibilities and achievements"
-              />
+              <Space direction="vertical" style={{ width: '100%' }} size="small">
+                <Input.TextArea
+                  rows={4}
+                  value={exp.description}
+                  onChange={(e) => handleChange(exp.id, 'description', e.target.value)}
+                  placeholder="Describe your responsibilities and achievements"
+                />
+                <Button
+                  size="small"
+                  icon={<BgColorsOutlined />}
+                  onClick={() => handleSuggestDescription(exp)}
+                  style={{ alignSelf: 'flex-start' }}
+                >
+                  ✨ AI Improve Description
+                </Button>
+              </Space>
             </Form.Item>
           </Form>
         </Card>
@@ -132,6 +185,17 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }) => {
       >
         Add Experience
       </Button>
+
+      <SuggestionModal
+        visible={suggestionState.visible}
+        title="Improve Job Description"
+        original={suggestionState.original}
+        suggested={suggestionState.suggested}
+        loading={suggestionState.loading}
+        error={suggestionState.error}
+        onAccept={handleAcceptSuggestion}
+        onCancel={() => setSuggestionState({ visible: false, loading: false, original: '', suggested: '' })}
+      />
     </Card>
   );
 };

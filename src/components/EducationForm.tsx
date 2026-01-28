@@ -1,7 +1,9 @@
-import React from 'react';
-import { Form, Input, Button, Card, Row, Col } from 'antd';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Form, Input, Button, Card, Row, Col, Space } from 'antd';
+import { DeleteOutlined, PlusOutlined, BgColorsOutlined } from '@ant-design/icons';
 import type { Education } from '../types/resume';
+import SuggestionModal from './SuggestionModal';
+import { improveEducationDescription } from '../utils/gemini';
 
 interface EducationFormProps {
   data: Education[];
@@ -9,6 +11,19 @@ interface EducationFormProps {
 }
 
 const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) => {
+  const [suggestionState, setSuggestionState] = useState<{
+    visible: boolean;
+    loading: boolean;
+    original: string;
+    suggested: string;
+    error?: string;
+    eduId?: string;
+  }>({
+    visible: false,
+    loading: false,
+    original: '',
+    suggested: '',
+  });
 
   const addEducation = () => {
     const newEducation: Education = {
@@ -32,6 +47,33 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) => {
     onChange(data.map(edu =>
       edu.id === id ? { ...edu, [field]: value } : edu
     ));
+  };
+
+  const handleSuggestDescription = async (edu: Education) => {
+    setSuggestionState({
+      visible: true,
+      loading: true,
+      original: edu.description || '',
+      suggested: '',
+      eduId: edu.id,
+    });
+
+    const result = await improveEducationDescription(edu.degree, edu.fieldOfStudy, edu.description || '');
+    setSuggestionState({
+      visible: true,
+      loading: false,
+      original: result.original,
+      suggested: result.suggested,
+      error: result.error,
+      eduId: edu.id,
+    });
+  };
+
+  const handleAcceptSuggestion = (suggestion: string) => {
+    if (suggestionState.eduId) {
+      handleChange(suggestionState.eduId, 'description', suggestion);
+    }
+    setSuggestionState({ visible: false, loading: false, original: '', suggested: '' });
   };
 
   return (
@@ -112,12 +154,22 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) => {
             </Row>
 
             <Form.Item label="Description">
-              <Input.TextArea
-                rows={3}
-                value={edu.description}
-                onChange={(e) => handleChange(edu.id, 'description', e.target.value)}
-                placeholder="Additional details about your education"
-              />
+              <Space direction="vertical" style={{ width: '100%' }} size="small">
+                <Input.TextArea
+                  rows={3}
+                  value={edu.description}
+                  onChange={(e) => handleChange(edu.id, 'description', e.target.value)}
+                  placeholder="Additional details about your education"
+                />
+                <Button
+                  size="small"
+                  icon={<BgColorsOutlined />}
+                  onClick={() => handleSuggestDescription(edu)}
+                  style={{ alignSelf: 'flex-start' }}
+                >
+                  ✨ AI Improve Description
+                </Button>
+              </Space>
             </Form.Item>
           </Form>
         </Card>
@@ -131,6 +183,17 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) => {
       >
         Add Education
       </Button>
+
+      <SuggestionModal
+        visible={suggestionState.visible}
+        title="Improve Education Description"
+        original={suggestionState.original}
+        suggested={suggestionState.suggested}
+        loading={suggestionState.loading}
+        error={suggestionState.error}
+        onAccept={handleAcceptSuggestion}
+        onCancel={() => setSuggestionState({ visible: false, loading: false, original: '', suggested: '' })}
+      />
     </Card>
   );
 };
