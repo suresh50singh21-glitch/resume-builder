@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, Button, Tabs, message, Space, Upload, Divider } from 'antd';
+import { Modal, Button, Tabs, message, Space, Upload, Divider, Spin } from 'antd';
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { exportResumeAsJSON, exportResumeAsCSV, parseJSONToResume, parseCSVToResume } from '../utils/importExport';
+import { parseResumeFromText } from '../utils/pdfParser';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { ResumeData } from '../types/resume';
 
@@ -14,6 +15,7 @@ interface ImportExportModalProps {
 
 const ImportExportModal: React.FC<ImportExportModalProps> = ({ visible, onClose, resumeData, onImport }) => {
   const [importData, setImportData] = useState('');
+  const [isExtracting, setIsExtracting] = useState(false);
 
   // Set up PDF.js worker
   React.useEffect(() => {
@@ -94,7 +96,7 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ visible, onClose,
         }
         
         setImportData(fullText);
-        message.success('PDF loaded! You can review the extracted text below or try to extract structured data.');
+        message.success('PDF loaded! Click "Extract & Fill Form" to populate the resume fields.');
       } else {
         // Handle JSON/CSV
         const text = await file.text();
@@ -106,6 +108,26 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ visible, onClose,
       console.error(error);
     }
     return false;
+  };
+
+  const handleExtractAndFill = async () => {
+    if (!importData.trim()) {
+      message.error('No data to extract');
+      return;
+    }
+
+    setIsExtracting(true);
+    try {
+      const extracted = await parseResumeFromText(importData);
+      onImport(extracted);
+      message.success('Resume data extracted and form updated successfully!');
+      setImportData('');
+      onClose();
+    } catch (error) {
+      message.error(`Extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsExtracting(false);
+    }
   };
 
   const tabItems = [
@@ -169,6 +191,15 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ visible, onClose,
               disabled={!importData.trim()}
             >
               Import as CSV
+            </Button>
+            <Button
+              type="primary"
+              danger
+              loading={isExtracting}
+              onClick={handleExtractAndFill}
+              disabled={!importData.trim()}
+            >
+              Extract & Fill Form (AI)
             </Button>
             <Button
               onClick={() => {

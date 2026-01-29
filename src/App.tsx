@@ -285,75 +285,67 @@ const App: React.FC = () => {
           <h2 style={{ color: 'white', margin: 0 }}>Resume Builder</h2>
           <Space wrap>
             <Button
-              type="default"
               icon={darkMode ? <SunOutlined /> : <MoonOutlined />}
               onClick={() => setDarkMode(!darkMode)}
-              style={{ color: 'white', borderColor: 'white' }}
+              style={{ color: 'white', backgroundColor: '#177ddc', border: 'none' }}
               title="Toggle Dark Mode"
             >
               {darkMode ? 'Light' : 'Dark'}
             </Button>
             <Button
-              type="default"
               icon={<UndoOutlined />}
               onClick={undo}
               disabled={!canUndo}
-              style={{ color: 'white', borderColor: 'white' }}
+              style={{ color: 'white', backgroundColor: '#177ddc', border: 'none' }}
               title="Undo (Ctrl+Z)"
             >
               Undo
             </Button>
             <Button
-              type="default"
               icon={<RedoOutlined />}
               onClick={redo}
               disabled={!canRedo}
-              style={{ color: 'white', borderColor: 'white' }}
+              style={{ color: 'white', backgroundColor: '#177ddc', border: 'none' }}
               title="Redo (Ctrl+Y)"
             >
               Redo
             </Button>
             <Button
-              type="default"
               icon={<BgColorsOutlined />}
               onClick={() => setShowTemplatesGrid(true)}
-              style={{ color: 'white', borderColor: 'white' }}
+              style={{ color: 'white', backgroundColor: '#177ddc', border: 'none' }}
               title="View All Templates"
             >
               Templates
             </Button>
             <Button
-              type="default"
               icon={<BulbOutlined />}
               onClick={() => setShowSkillsSuggestion(true)}
-              style={{ color: 'white', borderColor: 'white' }}
+              style={{ color: 'white', backgroundColor: '#177ddc', border: 'none' }}
               title="AI Skill Suggestions"
             >
               Skills AI
             </Button>
             <Button
-              type="default"
               icon={<FileTextOutlined />}
               onClick={() => setShowCoverLetter(true)}
-              style={{ color: 'white', borderColor: 'white' }}
+              style={{ color: 'white', backgroundColor: '#177ddc', border: 'none' }}
               title="Generate Cover Letter"
             >
               Cover Letter
             </Button>
             <Button
-              type="default"
               icon={<ImportOutlined />}
               onClick={() => setShowImportExport(true)}
-              style={{ color: 'white', borderColor: 'white' }}
+              style={{ color: 'white', backgroundColor: '#177ddc', border: 'none' }}
               title="Import/Export Resume"
             >
               Import/Export
             </Button>
             <Button
-              type="default"
               icon={<FolderOutlined />}
               onClick={() => setShowMultipleResumes(true)}
-              style={{ color: 'white', borderColor: 'white' }}
+              style={{ color: 'white', backgroundColor: '#177ddc', border: 'none' }}
               title="Manage Resume Versions"
             >
               Versions
