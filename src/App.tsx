@@ -44,7 +44,7 @@ const App: React.FC = () => {
   const [isSaved, setIsSaved] = useState(true);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [fontSize, setFontSize] = useState(() => parseInt(localStorage.getItem('fontSize') || '14'));
-  const [accentColor, setAccentColor] = useState(() => localStorage.getItem('accentColor') || defaultColors['professional']);
+  const [accentColor, setAccentColor] = useState(() => localStorage.getItem('accentColor') || '#17a2b8');
   const [showTemplatesGrid, setShowTemplatesGrid] = useState(false);
   const [showSkillsSuggestion, setShowSkillsSuggestion] = useState(false);
   const [showCoverLetter, setShowCoverLetter] = useState(false);
