@@ -459,7 +459,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({ data, template, darkMode 
           </Space>
         }
       >
-        <div id="resume-content" className="resume-content" style={{ filter: darkMode ? 'invert(1)' : 'none' }}>
+        <div id="resume-content" className="resume-content">
           {renderTemplate()}
         </div>
       </Card>
