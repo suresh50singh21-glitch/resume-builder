@@ -8,9 +8,12 @@ import '../styles/resume-preview.css';
 interface ResumePreviewProps {
   data: ResumeData;
   template: string;
+  darkMode?: boolean;
+  fontSize?: number;
+  visibleSections?: Record<string, boolean>;
 }
 
-const ResumePreview: React.FC<ResumePreviewProps> = ({ data, template }) => {
+const ResumePreview: React.FC<ResumePreviewProps> = ({ data, template, darkMode = false, fontSize = 14, visibleSections = {} }) => {
   const getSkillWidth = (proficiency: string) => {
     const levels: Record<string, number> = {
       'Beginner': 25,
@@ -39,7 +42,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({ data, template }) => {
         </div>
       )}
 
-      {data.experience.length > 0 && (
+      {visibleSections.experience !== false && data.experience.length > 0 && (
         <div className="resume-section">
           <h3>Work Experience</h3>
           {data.experience.map((exp) => (
@@ -57,7 +60,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({ data, template }) => {
         </div>
       )}
 
-      {data.education.length > 0 && (
+      {visibleSections.education !== false && data.education.length > 0 && (
         <div className="resume-section">
           <h3>Education</h3>
           {data.education.map((edu) => (
@@ -73,7 +76,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({ data, template }) => {
         </div>
       )}
 
-      {data.skills.length > 0 && (
+      {visibleSections.skills !== false && data.skills.length > 0 && (
         <div className="resume-section">
           <h3>Skills</h3>
           <div className="skills-grid">
@@ -89,7 +92,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({ data, template }) => {
         </div>
       )}
 
-      {data.projects.length > 0 && (
+      {visibleSections.projects !== false && data.projects.length > 0 && (
         <div className="resume-section">
           <h3>Projects</h3>
           {data.projects.map((project) => (
@@ -104,7 +107,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({ data, template }) => {
         </div>
       )}
 
-      {data.languages.length > 0 && (
+      {visibleSections.languages !== false && data.languages.length > 0 && (
         <div className="resume-section">
           <h3>Languages</h3>
           <div className="languages-grid">
@@ -437,9 +440,10 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({ data, template }) => {
   };
 
   return (
-    <div className="resume-preview-container">
+    <div className="resume-preview-container" style={{ fontSize: `${fontSize}px`, background: darkMode ? '#1f1f1f' : '#ffffff' }}>
       <Card
         title={`Resume Preview - ${template.charAt(0).toUpperCase() + template.slice(1)}`}
+        style={{ background: darkMode ? '#262626' : '#ffffff', color: darkMode ? '#ffffff' : '#000000' }}
         extra={
           <Space>
             <Button
@@ -455,7 +459,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({ data, template }) => {
           </Space>
         }
       >
-        <div id="resume-content" className="resume-content">
+        <div id="resume-content" className="resume-content" style={{ filter: darkMode ? 'invert(1)' : 'none' }}>
           {renderTemplate()}
         </div>
       </Card>
