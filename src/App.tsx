@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Row, Col, Tabs, Button, Space, Modal, message, Progress, Slider, Checkbox, Segmented, Collapse } from 'antd';
-import { SaveOutlined, UndoOutlined, RedoOutlined, CopyOutlined, BgColorsOutlined, SunOutlined, MoonOutlined, BulbOutlined, FileTextOutlined, ImportOutlined, SavesOutlined } from '@ant-design/icons';
+import { SaveOutlined, UndoOutlined, RedoOutlined, CopyOutlined, BgColorsOutlined, SunOutlined, MoonOutlined, BulbOutlined, FileTextOutlined, ImportOutlined, FolderOutlined } from '@ant-design/icons';
 import type { ResumeData } from './types/resume';
 import PersonalInfoForm from './components/PersonalInfoForm';
 import EducationForm from './components/EducationForm';
@@ -344,7 +344,7 @@ const App: React.FC = () => {
               Import/Export
             </Button>
             <Button
-              icon={<SavesOutlined />}
+              icon={<FolderOutlined />}
               onClick={() => setShowMultipleResumes(true)}
               style={{ color: 'white' }}
               title="Manage Resume Versions"
