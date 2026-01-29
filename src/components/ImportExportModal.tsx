@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Button, Tabs, message, Space, Upload, Divider } from 'antd';
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { exportResumeAsJSON, exportResumeAsCSV, parseJSONToResume, parseCSVToResume } from '../utils/importExport';
+import * as pdfjsLib from 'pdfjs-dist';
 import type { ResumeData } from '../types/resume';
 
 interface ImportExportModalProps {
@@ -13,6 +14,11 @@ interface ImportExportModalProps {
 
 const ImportExportModal: React.FC<ImportExportModalProps> = ({ visible, onClose, resumeData, onImport }) => {
   const [importData, setImportData] = useState('');
+
+  // Set up PDF.js worker
+  React.useEffect(() => {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  }, []);
 
   const handleDownloadJSON = () => {
     const json = exportResumeAsJSON(resumeData);
@@ -72,11 +78,32 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ visible, onClose,
 
   const handleFileUpload = async (file: File) => {
     try {
-      const text = await file.text();
-      setImportData(text);
-      message.success('File loaded! Click Import to proceed.');
+      if (file.type === 'application/pdf') {
+        // Handle PDF
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items
+            .map((item: any) => item.str || '')
+            .join(' ');
+          fullText += pageText + '\n';
+        }
+        
+        setImportData(fullText);
+        message.success('PDF loaded! You can review the extracted text below or try to extract structured data.');
+      } else {
+        // Handle JSON/CSV
+        const text = await file.text();
+        setImportData(text);
+        message.success('File loaded! Click Import to proceed.');
+      }
     } catch (error) {
       message.error('Failed to read file');
+      console.error(error);
     }
     return false;
   };
@@ -89,10 +116,10 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ visible, onClose,
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
-              Upload JSON or CSV File
+              Upload JSON, CSV, or PDF File
             </label>
             <Upload
-              accept=".json,.csv"
+              accept=".json,.csv,.pdf"
               maxCount={1}
               beforeUpload={handleFileUpload}
               onDrop={(e) => {
@@ -115,7 +142,7 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ visible, onClose,
             <textarea
               value={importData}
               onChange={(e) => setImportData(e.target.value)}
-              placeholder="Paste your JSON or CSV content here..."
+              placeholder="Paste your JSON or CSV content here... Or paste extracted text from PDF..."
               style={{
                 width: '100%',
                 minHeight: '300px',
@@ -142,6 +169,14 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ visible, onClose,
               disabled={!importData.trim()}
             >
               Import as CSV
+            </Button>
+            <Button
+              onClick={() => {
+                setImportData('');
+                message.info('Text cleared. You can paste new content or upload a file.');
+              }}
+            >
+              Clear
             </Button>
           </Space>
         </div>
